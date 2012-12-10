@@ -6,6 +6,8 @@ class Display{
 			d.innerHTML += StringTools.replace(s, "\n", "<br>"); 
 		#elseif cpp
 			cpp.Lib.print(s); 
+		#elseif java	
+			java.lang.System.out.print(s); 
 		#end
 	}
 	
@@ -118,12 +120,13 @@ class EM {
 	
 	static var numbers; 
 	static var stars; 
+	static var url = "http://localhost/empkg-git/em_keys.json"; 
 	
     public static function main() {
 		numbers = new Node(0, null, null); 
 		numbers.create(50, 1); 
 		stars = new Node(0, null, null); 
-		stars.create(11, 1); 
+		stars.create(11, 1); 		
 		populate(); 
 		genKeys(5); 
     }
@@ -153,23 +156,52 @@ class EM {
 		Display.print(" (rand=" + Math.round((random/key.length)*100) + "%)"); 
 		
 	}
-    
-    
+
+	#if java
+		@:functionBody("
+			try{
+				java.net.URL link = new java.net.URL(url);
+				java.net.URLConnection con = link.openConnection();
+				java.io.InputStream in = con.getInputStream();
+				java.lang.String encoding = con.getContentEncoding();
+				encoding = encoding == null ? \"UTF-8\" : encoding;
+				java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+				byte[] buf = new byte[8192];
+				int len = 0;
+				while ((len = in.read(buf)) != -1) {
+					baos.write(buf, 0, len);
+				}
+				String body = new String(baos.toByteArray(), encoding);
+				return body; 
+			}catch(Exception e){
+				return \"[]\"; 
+			}
+		")
+    #end
+    static public function getUrl(url) : String {
+		#if !java
+			return haxe.Http.requestUrl(url); 
+		#else 
+			return ""; 
+		#end
+		
+	}
     
     static public function populate(){
-		var em : Array<NumberStars>; 
-		var s = haxe.Http.requestUrl("em_keys.json"); 
-		em = haxe.Json.parse(s); 
+		var s = getUrl(url); 
+		var em : Array<Dynamic> = haxe.Json.parse(s); 
 		var i, n, s; 
-		for(i in 0...em.length){
-		   for(n in 0...em[i].numbers.length){
-				numbers.count(em[i].numbers[n]); 
+			
+		for(i in em){
+		   for(n in 0...i.numbers.length){
+				numbers.count(i.numbers[n]); 
 		   }
-		   
-		   for(s in 0...em[i].stars.length){
-				stars.count(em[i].stars[s]); 
+			   
+		   for(s in 0...i.stars.length){
+				stars.count(i.stars[s]); 
 		   }
 		}
+
 	}
     
     static public function numberGen(max, numbers) : Array<Info> {

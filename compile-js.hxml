@@ -1,4 +1,4 @@
 -main EM
--js em.js 
-
+-js web/em.js 
+-D haxeJSON
 

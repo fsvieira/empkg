@@ -1,5 +1,6 @@
 -main EM
--cpp em
+-cpp cpp
+-D haxeJSON
 
 
 
