@@ -19,7 +19,6 @@ Run
 =====
 
 Web:
-
 Copy the web folder to server and access it from a browser. 
 Local running may not work because of file access. 
 
