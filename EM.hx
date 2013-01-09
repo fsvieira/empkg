@@ -13,29 +13,18 @@ class Display{
 	
 }
 
-class Info{
-	public var number : Int; 
-	public var random : Float;
-	
-	public function new(number, random){
-		this.number = number; 
-		this.random = random; 
-	}
-}
 
 class Node {
 	var hits : Int; 
 	var number : Int; 
 	var left : Node; 
 	var right: Node; 
-	var genHits : Int; 
-	
+
 	public function new(number, left, right){
 		this.number = number; 
 		this.left = left; 
 		this.right = right; 
 		hits = 0; 
-		genHits = 0; 
 	}
 	
 	public function create(max, i ) : Int {
@@ -54,15 +43,15 @@ class Node {
 		}
 	}
 
-	public function count(number){
-		hits++; 
+	public function count(number, c){
+		hits += c; 
 		if(number >= this.number){
 			if(right != null){
-				right.count(number); 
+				right.count(number, c); 
 			}
 		}else{
 			if(left != null){
-				left.count(number); 
+				left.count(number, c); 
 			}
 		}
 	}
@@ -84,27 +73,25 @@ class Node {
 	}
 	
 	
-	public function getDigit(key, count, random) : Info {
-		genHits++; 
+	public function getDigit() : Int {
+		hits++; 
 		if(left != null && right != null ){
-			if( (left.hits < right.hits) && ((left.genHits < right.genHits) || (left.genHits == 0) ) ){
-				return left.getDigit(key, count+1, random);	
-			}else if( (left.hits > right.hits) && ((left.genHits > right.genHits) || (right.genHits == 0)) ){
-				return right.getDigit(key, count+1, random);	
-			}else if(left.genHits < right.genHits){
-				return left.getDigit(key, count+1, random);		
-			}else if(left.genHits > right.genHits){
-				return right.getDigit(key, count+1, random);	
+			if(left.hits < right.hits){
+				left.hits = right.hits; 
+				return left.getDigit();	
+			}else if(left.hits > right.hits){
+				right.hits = left.hits; 
+				return right.getDigit();	
 			}else{
 				var r = Std.random(2); 
 				if(r==0){
-					return left.getDigit(key, count+1, random+1);	
+					return left.getDigit();	
 				}else{
-					return right.getDigit(key, count+1, random+1);	
+					return right.getDigit();	
 				}
 			}
 		}else{
-			return new Info(number, random/count); 
+			return number; 
 		}
 	}
 	
@@ -120,7 +107,7 @@ class EM {
 	
 	static var numbers; 
 	static var stars; 
-	static var url = "http://localhost/empkg-git/em_keys.json"; 
+	static var url = "http://fsvieira.com/empkg/em_keys.json"; 
 	
     public static function main() {
 		numbers = new Node(0, null, null); 
@@ -128,7 +115,7 @@ class EM {
 		stars = new Node(0, null, null); 
 		stars.create(11, 1); 		
 		populate(); 
-		genKeys(5); 
+		genRandomKey(100); 
     }
     
 	public static function genKeys(max){
@@ -145,16 +132,38 @@ class EM {
 		}
 	}
 
+	public static function genRandomKey(max){
+		var i = Std.random(max); 
+		var keyNumbers, keyStars; 
+		Display.print("iterations: " + i + ", "); 
+		
+		do{
+			keyNumbers = numberGen(5, numbers);
+			keyStars = numberGen(2, stars);  
+			i--; 
+		}while(i > 0);
+		
+		
+		
+		Display.print("numbers: "); 
+		printKey(keyNumbers); 
+		Display.print(", stars: ");
+		printKey(keyStars);
+		Display.print("\n"); 	
+		
+	}
 
-	static function printKey(key : Array<Info> ){
-		var random = 0.0; 	
-		for(i in 0...key.length){
-			random += key[i].random; 
-			Display.print(" "+ key[i].number); 
+
+	static function ord(a:Int, b:Int) : Int {
+		return a - b; 
+	}
+
+	static function printKey(key : Array<Int> ){
+		var random = 0.0; 
+		key.sort(ord); 	
+		for(i in key){
+			Display.print(" "+ i); 
 		}
-		
-		Display.print(" (rand=" + Math.round((random/key.length)*100) + "%)"); 
-		
 	}
 
 	#if java
@@ -188,27 +197,46 @@ class EM {
 	}
     
     static public function populate(){
+		// TODO: if cant getUrl get a local file (C++/Java)
 		var s = getUrl(url); 
 		var em : Array<Dynamic> = haxe.Json.parse(s); 
 		var i, n, s; 
 			
 		for(i in em){
 		   for(n in 0...i.numbers.length){
-				numbers.count(i.numbers[n]); 
+				numbers.count(i.numbers[n], 1); 
 		   }
 			   
 		   for(s in 0...i.stars.length){
-				stars.count(i.stars[s]); 
+				stars.count(i.stars[s], 1); 
 		   }
 		}
 
 	}
     
-    static public function numberGen(max, numbers) : Array<Info> {
+    static public function isIn(a : Array<Int>, n : Int) : Bool {
+		var i; 
+		for(i in a){
+			if(i == n){
+				return true; 
+			}
+		}
+		
+		return false; 
+	}
+    
+    static public function numberGen(max, numbers) : Array<Int> {
 		var i; 
 		var key = []; 
+		var number; 
 		for(i in 0...max){
-			key[i] = numbers.getDigit(key, 0, 0); 
+			
+			do{
+				number = numbers.getDigit(); 
+			}while(isIn(key, number)); 
+
+			key[i] = number; 
+
 		}
 		
 		return key; 
