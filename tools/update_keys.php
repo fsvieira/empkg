@@ -58,6 +58,62 @@
 			fclose($fh);
 			system("rm em_keys_* -rf && cp em_keys.json ". $myFile); 
 			echo "Updated."; 
+			
+			// mk statistics 
+			$fh = fopen("em_stats.json", 'w+') or die("can't open file");
+			
+			$string = file_get_contents("em_keys.json");
+			$json_a=json_decode($string,true);
+			
+			$numbers = array(); 
+			for($i=0; $i<50; $i++){
+				$numbers[$i] =0; 
+			}
+			
+			$stars = array(); 
+			for($i=0; $i<11; $i++){
+				$stars[$i] =0; 
+			}
+			
+			foreach($json_a as $keys){
+				foreach($keys as $key => $val){
+					if($key == "numbers"){
+						foreach($val as $n){
+							$numbers[((int)$n)-1]++; 
+						}		
+					}else{
+						foreach($val as $n){
+							$stars[((int)$n)-1]++; 
+						}
+					}
+					
+				}
+			}
+			
+			$stringData = "{\"numbers\":["; 
+			for($i=0; $i<count($numbers);$i++){
+				if($i!= 0){
+					$stringData .= "," . $numbers[$i]; 
+				}else{
+					$stringData .= $numbers[$i]; 
+				}
+			}
+			
+			$stringData .= "],\"stars\":["; 
+			for($i=0; $i<count($stars);$i++){
+				if($i!= 0){
+					$stringData .= "," . $stars[$i]; 
+				}else{
+					$stringData .= $stars[$i]; 
+				}
+			}
+			
+			$stringData .= "]}"; 
+			
+			
+			fwrite($fh, $stringData);
+			fclose($fh);
+			
 		}else{
 			echo "Nothing to do.";
 		}
