@@ -1,3 +1,5 @@
+WARNING: this repo is no longer active.
+
 empkg
 =====
 
